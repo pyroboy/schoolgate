@@ -21,11 +21,12 @@
     "rollup": "^1.12.0",
     "rollup-plugin-babel": "^4.0.2",
     "rollup-plugin-commonjs": "^10.0.0",
-    "rollup-plugin-livereload": "^1.0.0",
-    "sapper": "^0.27.0",
-    "svelte": "^3.0.0"
+    "rollup-plugin-livereload": "^1.0.0"
+
   },
   "dependencies": {
+    "sapper": "^0.27.0",
+    "svelte": "^3.0.0",
     "rollup-plugin-node-resolve": "^5.2.0",
     "rollup-plugin-replace": "^2.2.0",
     "rollup-plugin-svelte": "^5.0.3",
