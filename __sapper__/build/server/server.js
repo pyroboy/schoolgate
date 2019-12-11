@@ -3,15 +3,49 @@
 function _interopDefault (ex) { return (ex && (typeof ex === 'object') && 'default' in ex) ? ex['default'] : ex; }
 
 var sirv = _interopDefault(require('sirv'));
-var polka = _interopDefault(require('polka'));
 var compression = _interopDefault(require('compression'));
 var fs = _interopDefault(require('fs'));
 var path = _interopDefault(require('path'));
+var graphqlHTTP = _interopDefault(require('express-graphql'));
+var graphqlTools = require('graphql-tools');
+var svelteApollo = require('svelte-apollo');
+var ApolloClient = _interopDefault(require('apollo-client'));
+var apolloCacheInmemory = require('apollo-cache-inmemory');
+require('apollo-link-ws');
+var apolloLinkHttp = require('apollo-link-http');
+var fetch$1 = _interopDefault(require('isomorphic-fetch'));
+var apolloBoost = require('apollo-boost');
+var moment = _interopDefault(require('moment'));
 var Stream = _interopDefault(require('stream'));
 var http = _interopDefault(require('http'));
 var Url = _interopDefault(require('url'));
 var https = _interopDefault(require('https'));
 var zlib = _interopDefault(require('zlib'));
+var express = _interopDefault(require('express'));
+
+const typeDefs = `
+  type Query {
+    random: Float
+  }
+`;
+
+const resolvers = {
+  Query: {
+    random: () => Math.random(),
+  }
+};
+
+const schema = graphqlTools.makeExecutableSchema({typeDefs, resolvers});
+
+const post = graphqlHTTP({
+  schema,
+  pretty: true
+});
+
+var route_0 = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  post: post
+});
 
 // Ordinarily, you'd generate this data from markdown files in your
 // repo, or fetch them from a database of some kind. But in order to
@@ -119,9 +153,9 @@ function get(req, res) {
 	res.end(contents);
 }
 
-var route_0 = /*#__PURE__*/Object.freeze({
-	__proto__: null,
-	get: get
+var route_1 = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  get: get
 });
 
 const lookup = new Map();
@@ -151,12 +185,15 @@ function get$1(req, res, next) {
 	}
 }
 
-var route_1 = /*#__PURE__*/Object.freeze({
-	__proto__: null,
-	get: get$1
+var route_2 = /*#__PURE__*/Object.freeze({
+  __proto__: null,
+  get: get$1
 });
 
 function noop() { }
+function is_promise(value) {
+    return value && typeof value === 'object' && typeof value.then === 'function';
+}
 function run(fn) {
     return fn();
 }
@@ -169,6 +206,15 @@ function run_all(fns) {
 function safe_not_equal(a, b) {
     return a != a ? b == b : a !== b || ((a && typeof a === 'object') || typeof a === 'function');
 }
+function subscribe(store, callback) {
+    const unsub = store.subscribe(callback);
+    return unsub.unsubscribe ? () => unsub.unsubscribe() : unsub;
+}
+function get_store_value(store) {
+    let value;
+    subscribe(store, _ => value = _)();
+    return value;
+}
 
 let current_component;
 function set_current_component(component) {
@@ -178,6 +224,9 @@ function get_current_component() {
     if (!current_component)
         throw new Error(`Function called outside component initialization`);
     return current_component;
+}
+function onMount(fn) {
+    get_current_component().$$.on_mount.push(fn);
 }
 function setContext(key, context) {
     get_current_component().$$.context.set(key, context);
@@ -251,7 +300,7 @@ function create_ssr_component(fn) {
 
 const css = {
 	code: "h1.svelte-1kk9opm,figure.svelte-1kk9opm,p.svelte-1kk9opm{text-align:center;margin:0 auto}h1.svelte-1kk9opm{font-size:2.8em;text-transform:uppercase;font-weight:700;margin:0 0 0.5em 0}figure.svelte-1kk9opm{margin:0 0 1em 0}img.svelte-1kk9opm{width:100%;max-width:400px;margin:0 0 1em 0}p.svelte-1kk9opm{margin:1em auto}@media(min-width: 480px){h1.svelte-1kk9opm{font-size:4em}}",
-	map: "{\"version\":3,\"file\":\"index.svelte\",\"sources\":[\"index.svelte\"],\"sourcesContent\":[\"<style>\\n\\th1, figure, p {\\n\\t\\ttext-align: center;\\n\\t\\tmargin: 0 auto;\\n\\t}\\n\\n\\th1 {\\n\\t\\tfont-size: 2.8em;\\n\\t\\ttext-transform: uppercase;\\n\\t\\tfont-weight: 700;\\n\\t\\tmargin: 0 0 0.5em 0;\\n\\t}\\n\\n\\tfigure {\\n\\t\\tmargin: 0 0 1em 0;\\n\\t}\\n\\n\\timg {\\n\\t\\twidth: 100%;\\n\\t\\tmax-width: 400px;\\n\\t\\tmargin: 0 0 1em 0;\\n\\t}\\n\\n\\tp {\\n\\t\\tmargin: 1em auto;\\n\\t}\\n\\n\\t@media (min-width: 480px) {\\n\\t\\th1 {\\n\\t\\t\\tfont-size: 4em;\\n\\t\\t}\\n\\t}\\n</style>\\n\\n<svelte:head>\\n\\t<title>Sapper project template</title>\\n</svelte:head>\\n\\n<h1>Great success!</h1>\\n\\n<figure>\\n\\t<img alt='Borat' src='great-success.png'>\\n\\t<figcaption>HIGH FIVE!</figcaption>\\n</figure>\\n\\n<p><strong>Try editing this file (src/routes/index.svelte) to test live reloading.</strong></p>\\n\"],\"names\":[],\"mappings\":\"AACC,iBAAE,CAAE,qBAAM,CAAE,CAAC,eAAC,CAAC,AACd,UAAU,CAAE,MAAM,CAClB,MAAM,CAAE,CAAC,CAAC,IAAI,AACf,CAAC,AAED,EAAE,eAAC,CAAC,AACH,SAAS,CAAE,KAAK,CAChB,cAAc,CAAE,SAAS,CACzB,WAAW,CAAE,GAAG,CAChB,MAAM,CAAE,CAAC,CAAC,CAAC,CAAC,KAAK,CAAC,CAAC,AACpB,CAAC,AAED,MAAM,eAAC,CAAC,AACP,MAAM,CAAE,CAAC,CAAC,CAAC,CAAC,GAAG,CAAC,CAAC,AAClB,CAAC,AAED,GAAG,eAAC,CAAC,AACJ,KAAK,CAAE,IAAI,CACX,SAAS,CAAE,KAAK,CAChB,MAAM,CAAE,CAAC,CAAC,CAAC,CAAC,GAAG,CAAC,CAAC,AAClB,CAAC,AAED,CAAC,eAAC,CAAC,AACF,MAAM,CAAE,GAAG,CAAC,IAAI,AACjB,CAAC,AAED,MAAM,AAAC,YAAY,KAAK,CAAC,AAAC,CAAC,AAC1B,EAAE,eAAC,CAAC,AACH,SAAS,CAAE,GAAG,AACf,CAAC,AACF,CAAC\"}"
+	map: "{\"version\":3,\"file\":\"index.svelte\",\"sources\":[\"index.svelte\"],\"sourcesContent\":[\"<style>\\n\\th1, figure, p {\\n\\t\\ttext-align: center;\\n\\t\\tmargin: 0 auto;\\n\\t}\\n\\n\\th1 {\\n\\t\\tfont-size: 2.8em;\\n\\t\\ttext-transform: uppercase;\\n\\t\\tfont-weight: 700;\\n\\t\\tmargin: 0 0 0.5em 0;\\n\\t}\\n\\n\\tfigure {\\n\\t\\tmargin: 0 0 1em 0;\\n\\t}\\n\\n\\timg {\\n\\t\\twidth: 100%;\\n\\t\\tmax-width: 400px;\\n\\t\\tmargin: 0 0 1em 0;\\n\\t}\\n\\n\\tp {\\n\\t\\tmargin: 1em auto;\\n\\t}\\n\\n\\t@media (min-width: 480px) {\\n\\t\\th1 {\\n\\t\\t\\tfont-size: 4em;\\n\\t\\t}\\n\\t}\\n</style>\\n\\n<svelte:head>\\n\\t<title>Sapper project template</title>\\n</svelte:head>\\n\\n<h1>Great success!</h1>\\n\\n<figure>\\n\\t<img alt='Borat' src='great-success.png'>\\n\\t<figcaption>HIGH FIVE!</figcaption>\\n</figure>\\n\\n<p><strong>Great Success rat asdasdTry editing this file (src/routes/index.svelte) to test live reloading.</strong></p>\\n\"],\"names\":[],\"mappings\":\"AACC,iBAAE,CAAE,qBAAM,CAAE,CAAC,eAAC,CAAC,AACd,UAAU,CAAE,MAAM,CAClB,MAAM,CAAE,CAAC,CAAC,IAAI,AACf,CAAC,AAED,EAAE,eAAC,CAAC,AACH,SAAS,CAAE,KAAK,CAChB,cAAc,CAAE,SAAS,CACzB,WAAW,CAAE,GAAG,CAChB,MAAM,CAAE,CAAC,CAAC,CAAC,CAAC,KAAK,CAAC,CAAC,AACpB,CAAC,AAED,MAAM,eAAC,CAAC,AACP,MAAM,CAAE,CAAC,CAAC,CAAC,CAAC,GAAG,CAAC,CAAC,AAClB,CAAC,AAED,GAAG,eAAC,CAAC,AACJ,KAAK,CAAE,IAAI,CACX,SAAS,CAAE,KAAK,CAChB,MAAM,CAAE,CAAC,CAAC,CAAC,CAAC,GAAG,CAAC,CAAC,AAClB,CAAC,AAED,CAAC,eAAC,CAAC,AACF,MAAM,CAAE,GAAG,CAAC,IAAI,AACjB,CAAC,AAED,MAAM,AAAC,YAAY,KAAK,CAAC,AAAC,CAAC,AAC1B,EAAE,eAAC,CAAC,AACH,SAAS,CAAE,GAAG,AACf,CAAC,AACF,CAAC\"}"
 };
 
 const Routes = create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
@@ -266,22 +315,212 @@ const Routes = create_ssr_component(($$result, $$props, $$bindings, $$slots) => 
 	<figcaption>HIGH FIVE!</figcaption>
 </figure>
 
-<p class="${"svelte-1kk9opm"}"><strong>Try editing this file (src/routes/index.svelte) to test live reloading.</strong></p>`;
+<p class="${"svelte-1kk9opm"}"><strong>Great Success rat asdasdTry editing this file (src/routes/index.svelte) to test live reloading.</strong></p>`;
 });
 
-/* src/routes/about.svelte generated by Svelte v3.16.0 */
+const headers = {'content-type': 'application/json'};
+const getHeaders = () => {
+  return headers;
+};
 
-const About = create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
-	return `${($$result.head += `<title>About</title>`, "")}
+const cache = new apolloCacheInmemory.InMemoryCache();
+
+const httpLink = new apolloLinkHttp.HttpLink({
+  uri: "https://hasura-midcodes1.herokuapp.com/v1/graphql",
+   fetch: fetch$1 ,
+  headers: getHeaders()
+});
+
+
+
+const link =  httpLink;
+
+
+  const client = new ApolloClient({
+    link,
+    cache
+  });
+
+/* src/components/Test.svelte generated by Svelte v3.16.0 */
+
+const Test = create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
+	let $new_scans;
+	let $scans;
+	const client = svelteApollo.getClient();
+
+	const SCANS = apolloBoost.gql`
+    {
+      scanned(order_by: { created_at: desc }) {
+        scan
+      }
+    }
+  `;
+
+	const NEW_SCANS = apolloBoost.gql`
+  subscription {
+  scanned(limit: 1, order_by: {created_at: desc}) {
+    scan
+  }
+}
+  `;
+
+	let scans = svelteApollo.query(client, { query: SCANS });
+	$scans = get_store_value(scans);
+	let new_scans = svelteApollo.subscribe(client, { query: NEW_SCANS });
+	$new_scans = get_store_value(new_scans);
+	console.log(new_scans);
+	$new_scans = get_store_value(new_scans);
+	$scans = get_store_value(scans);
+
+	return `<ul>
+  ${(function (__value) {
+		if (is_promise(__value)) return `
+    <li>Loading...</li>
+  `;
+
+		return (function (result) {
+			return `
+    ${result.data.scanned.length
+			? each(result.data.scanned, scanned => `<li>${escape(scanned.scan)}</li>`)
+			: `<li>No authors found</li>`}
+  `;
+		})(__value);
+	})($new_scans)}
+</ul>
+
+
+
+${(function (__value) {
+		if (is_promise(__value)) return `
+  Loading...
+`;
+
+		return (function (result) {
+			return `
+  ${each(result.data.scanned, scan => `${escape(scan.scan)}
+    <br>`)}
+`;
+		})(__value);
+	})($scans)}`;
+});
+
+/* src/routes/dashboard.svelte generated by Svelte v3.16.0 */
+
+const Dashboard = create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
+	svelteApollo.setClient(client);
+
+	return `${($$result.head += `<title>Dashboard</title>`, "")}
+
 
 <h1>About this site</h1>
 
-<p>This is the &#39;about&#39; page. There&#39;s not much here.</p>`;
+<p>This is the &#39;about&#39; page. There&#39;s not much here.</p>
+
+${validate_component(Test, "Test").$$render($$result, {}, {}, {})}`;
+});
+
+/* src/routes/screen.svelte generated by Svelte v3.16.0 */
+
+const css$1 = {
+	code: ".grid.svelte-kmn29t{display:grid !important;grid-template-columns:1fr minmax(0, 90%) 1fr;padding-top:5%;margin-bottom:auto;height:100vh;background-color:dimgray}#header.svelte-kmn29t{max-height:20vh}.grid.svelte-kmn29t .svelte-kmn29t{grid-column:2/3}@media only screen and (max-width: 600px){#header.svelte-kmn29t{background-color:lightblue !important}}@media only screen and (max-width: 768px){#picture-id.svelte-kmn29t{flex-direction:row !important}#layout.svelte-kmn29t{flex-direction:column !important}#now.svelte-kmn29t{font-size:3rem !important}#period.svelte-kmn29t{font-size:2rem !important}}@media screen and (orientation: portrait){.is-4.svelte-kmn29t{width:100% !important}#id-number.svelte-kmn29t{font-size:1rem !important}}@media screen and (orientation: landscape){#picture-id.svelte-kmn29t{flex-direction:column !important}#layout.svelte-kmn29t{flex-direction:row !important}.grid.svelte-kmn29t{padding-top:1%;grid-template-columns:1fr minmax(0, 98%) 1fr}}#picture-id.svelte-kmn29t{flex-direction:column}.space-group.svelte-kmn29t{display:flex;justify-content:space-between;flex-direction:column}.center-box.svelte-kmn29t{background-color:#f5f5f5;color:#7a7a7a;padding:1.25rem 0;position:relative;text-align:center;min-height:100%;overflow-y:auto;align-self:flex-end}.is-fullheight.svelte-kmn29t{min-height:100vh}",
+	map: "{\"version\":3,\"file\":\"screen.svelte\",\"sources\":[\"screen.svelte\"],\"sourcesContent\":[\"\\n<script>\\n  \\n  console.log(\\\"rat\\\");\\n  import \\\"bulma/css/bulma.css\\\";\\n  import moment from \\\"moment\\\";\\n import { onMount } from 'svelte';\\n\\n  onMount(() => {\\n    const update = () =>{\\n    document.getElementById(\\\"now\\\").innerHTML = moment().format(\\\"h:mm:ss\\\");\\n    document.getElementById(\\\"period\\\").innerHTML = moment().format(\\\"A\\\");\\n};\\n  setInterval(update, 30);\\n\\n   });\\n\\n\\n  let genders = [\\\"women\\\", \\\"men\\\"];\\n  let gender = genders[Math.floor(Math.random() * 2)];\\n  let randomNumber = Math.floor(Math.random() * 80);\\n</script>\\n\\n<style>\\n  .grid {\\n    display: grid !important;\\n    grid-template-columns: 1fr minmax(0, 90%) 1fr;\\n    padding-top: 5%;\\n    margin-bottom: auto;\\n    height: 100vh;\\n    background-color: dimgray;\\n  }\\n\\n  #header {\\n    max-height: 20vh;\\n  }\\n\\n  .grid * {\\n    grid-column: 2/3;\\n  }\\n\\n  @media only screen and (max-width: 600px) {\\n    #header {\\n      background-color: lightblue !important;\\n    }\\n  }\\n  /* Portrait */\\n  @media only screen and (max-width: 768px) {\\n    #picture-id {\\n      flex-direction: row !important;\\n    }\\n    #layout {\\n      flex-direction: column !important;\\n    }\\n    #now {\\n      font-size: 3rem !important;\\n    }\\n    #period {\\n      font-size: 2rem !important;\\n    }\\n  }\\n  @media screen and (orientation: portrait) {\\n    .is-4 {\\n      width: 100% !important;\\n    }\\n    #id-number {\\n      font-size: 1rem !important;\\n    }\\n  }\\n\\n  @media screen and (orientation: landscape) {\\n    #picture-id {\\n      flex-direction: column !important;\\n    }\\n    #layout {\\n      flex-direction: row !important;\\n    }\\n    .grid {\\n      padding-top: 1%;\\n      grid-template-columns: 1fr minmax(0, 98%) 1fr;\\n    }\\n  }\\n\\n  #picture-id {\\n    flex-direction: column;\\n  }\\n  .space-group {\\n      display: flex;\\n    justify-content: space-between;\\n      flex-direction: column;\\n  }\\n  .center-box {\\n    background-color: #f5f5f5;\\n    color: #7a7a7a;\\n    padding: 1.25rem 0;\\n    position: relative;\\n    text-align: center;\\n    min-height: 100%;\\n    overflow-y: auto;\\n    align-self: flex-end;\\n  }\\n\\n  .is-fullheight {\\n    min-height: 100vh;\\n  }\\n</style>\\n\\n\\n  <section class=\\\"hero is-fullheight\\\">\\n    <div class=\\\" grid\\\">\\n\\n        <div class=\\\"column\\\">\\n          <div\\n            id=\\\"header\\\"\\n            class=\\\"column\\\"\\n            style=\\\"background-color: coral; align-items: center;\\\">\\n\\n            <div class=\\\"columns is-mobile is-multiline is-gapless\\\">\\n              <div class=\\\"column is-narrow is-paddingless\\\">\\n                <figure class=\\\"image is-64x64\\\">\\n                  <img\\n                    src=\\\"https://i.pinimg.com/474x/a3/4e/ef/a34eef6b581ad41202b0abdeacddfb84--school-logo-random-thoughts.jpg\\\"\\n                    alt=\\\"\\\" />\\n                </figure>\\n              </div>\\n              <div class=\\\"column is-narrow\\\">\\n                <p\\n                  class=\\\"title notification\\\"\\n                  style=\\\"font-size: 1rem;background: none;\\\">\\n                  TITLE\\n                </p>\\n              </div>\\n            </div>\\n          </div>\\n\\n          <div\\n            class=\\\"columns is-mutliline is-mobile is-marginless is-gapless\\\"\\n            id=\\\"layout\\\">\\n            <div class=\\\"column is-4\\\">\\n              <div\\n                class=\\\"columns is-mutliline is-mobile is-gapless\\\"\\n                id=\\\"picture-id\\\">\\n                <div class=\\\"column is-hard-right is-hard-bottom\\\">\\n                  <div class=\\\"notification \\\" id=\\\"picture\\\">\\n                    <figure class=\\\"image is-1by1\\\">\\n                      <img\\n                        src=\\\"https://randomuser.me/api/portraits/{gender}/{randomNumber}.jpg\\\" \\n                        alt=\\\"rat\\\"/>\\n                    </figure>\\n                  </div>\\n\\n                </div>\\n                <div class=\\\"column is-hard-bottom is-hard-top-landscape\\\">\\n                  <p class=\\\"center-box subtitle is-3\\\" id=\\\"id-number\\\">\\n                    10-00234\\n                  </p>\\n                </div>\\n\\n              </div>\\n\\n            </div>\\n\\n            <div class=\\\"column space-group\\\">\\n              <div class=\\\"column is-paddingless\\\">\\n                <p class=\\\"center-box title is-3 is-marginless\\\">\\n                  Arturo Jose T. Magnoaaaa\\n                </p>\\n              </div>\\n              <div class=\\\"notification is-marginless\\\">\\n                <div class=\\\"columns is-multiline is-mobile\\\">\\n                  <div class=\\\"column is-narrow\\\">\\n                    <p id=\\\"now\\\" class=\\\"title\\\" style=\\\"font-size: 5rem;\\\"></p>\\n                  </div>\\n                  <div class=\\\"column is-narrow\\\">\\n                    <p id=\\\"period\\\" class=\\\"title is-1\\\" />\\n                  </div>\\n                </div>\\n              </div>\\n              <div class=\\\"columns is-multiline is-mobile is-gapless\\\">\\n                <div class=\\\"column is-hard-right\\\">\\n                  <p class=\\\"center-box is-primary has-text-centered\\\">IN</p>\\n                </div>\\n                <div class=\\\"column is-hard-left\\\">\\n                  <p class=\\\"center-box is-primary has-text-centered\\\">OUT</p>\\n                </div>\\n              </div>\\n\\n            </div>\\n\\n          </div>\\n        </div>\\n      </div>\\n \\n  </section>\\n\"],\"names\":[],\"mappings\":\"AAwBE,KAAK,cAAC,CAAC,AACL,OAAO,CAAE,IAAI,CAAC,UAAU,CACxB,qBAAqB,CAAE,GAAG,CAAC,OAAO,CAAC,CAAC,CAAC,GAAG,CAAC,CAAC,GAAG,CAC7C,WAAW,CAAE,EAAE,CACf,aAAa,CAAE,IAAI,CACnB,MAAM,CAAE,KAAK,CACb,gBAAgB,CAAE,OAAO,AAC3B,CAAC,AAED,OAAO,cAAC,CAAC,AACP,UAAU,CAAE,IAAI,AAClB,CAAC,AAED,mBAAK,CAAC,cAAE,CAAC,AACP,WAAW,CAAE,CAAC,CAAC,CAAC,AAClB,CAAC,AAED,OAAO,IAAI,CAAC,MAAM,CAAC,GAAG,CAAC,YAAY,KAAK,CAAC,AAAC,CAAC,AACzC,OAAO,cAAC,CAAC,AACP,gBAAgB,CAAE,SAAS,CAAC,UAAU,AACxC,CAAC,AACH,CAAC,AAED,OAAO,IAAI,CAAC,MAAM,CAAC,GAAG,CAAC,YAAY,KAAK,CAAC,AAAC,CAAC,AACzC,WAAW,cAAC,CAAC,AACX,cAAc,CAAE,GAAG,CAAC,UAAU,AAChC,CAAC,AACD,OAAO,cAAC,CAAC,AACP,cAAc,CAAE,MAAM,CAAC,UAAU,AACnC,CAAC,AACD,IAAI,cAAC,CAAC,AACJ,SAAS,CAAE,IAAI,CAAC,UAAU,AAC5B,CAAC,AACD,OAAO,cAAC,CAAC,AACP,SAAS,CAAE,IAAI,CAAC,UAAU,AAC5B,CAAC,AACH,CAAC,AACD,OAAO,MAAM,CAAC,GAAG,CAAC,cAAc,QAAQ,CAAC,AAAC,CAAC,AACzC,KAAK,cAAC,CAAC,AACL,KAAK,CAAE,IAAI,CAAC,UAAU,AACxB,CAAC,AACD,UAAU,cAAC,CAAC,AACV,SAAS,CAAE,IAAI,CAAC,UAAU,AAC5B,CAAC,AACH,CAAC,AAED,OAAO,MAAM,CAAC,GAAG,CAAC,cAAc,SAAS,CAAC,AAAC,CAAC,AAC1C,WAAW,cAAC,CAAC,AACX,cAAc,CAAE,MAAM,CAAC,UAAU,AACnC,CAAC,AACD,OAAO,cAAC,CAAC,AACP,cAAc,CAAE,GAAG,CAAC,UAAU,AAChC,CAAC,AACD,KAAK,cAAC,CAAC,AACL,WAAW,CAAE,EAAE,CACf,qBAAqB,CAAE,GAAG,CAAC,OAAO,CAAC,CAAC,CAAC,GAAG,CAAC,CAAC,GAAG,AAC/C,CAAC,AACH,CAAC,AAED,WAAW,cAAC,CAAC,AACX,cAAc,CAAE,MAAM,AACxB,CAAC,AACD,YAAY,cAAC,CAAC,AACV,OAAO,CAAE,IAAI,CACf,eAAe,CAAE,aAAa,CAC5B,cAAc,CAAE,MAAM,AAC1B,CAAC,AACD,WAAW,cAAC,CAAC,AACX,gBAAgB,CAAE,OAAO,CACzB,KAAK,CAAE,OAAO,CACd,OAAO,CAAE,OAAO,CAAC,CAAC,CAClB,QAAQ,CAAE,QAAQ,CAClB,UAAU,CAAE,MAAM,CAClB,UAAU,CAAE,IAAI,CAChB,UAAU,CAAE,IAAI,CAChB,UAAU,CAAE,QAAQ,AACtB,CAAC,AAED,cAAc,cAAC,CAAC,AACd,UAAU,CAAE,KAAK,AACnB,CAAC\"}"
+};
+
+const Screen = create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
+	console.log("rat");
+
+	onMount(() => {
+		const update = () => {
+			document.getElementById("now").innerHTML = moment().format("h:mm:ss");
+			document.getElementById("period").innerHTML = moment().format("A");
+		};
+
+		setInterval(update, 30);
+	});
+
+	let genders = ["women", "men"];
+	let gender = genders[Math.floor(Math.random() * 2)];
+	let randomNumber = Math.floor(Math.random() * 80);
+	$$result.css.add(css$1);
+
+	return `<section class="${"hero is-fullheight svelte-kmn29t"}">
+    <div class="${" grid svelte-kmn29t"}">
+
+        <div class="${"column svelte-kmn29t"}">
+          <div id="${"header"}" class="${"column svelte-kmn29t"}" style="${"background-color: coral; align-items: center;"}">
+
+            <div class="${"columns is-mobile is-multiline is-gapless svelte-kmn29t"}">
+              <div class="${"column is-narrow is-paddingless svelte-kmn29t"}">
+                <figure class="${"image is-64x64 svelte-kmn29t"}">
+                  <img src="${"https://i.pinimg.com/474x/a3/4e/ef/a34eef6b581ad41202b0abdeacddfb84--school-logo-random-thoughts.jpg"}" alt="${""}" class="${"svelte-kmn29t"}">
+                </figure>
+              </div>
+              <div class="${"column is-narrow svelte-kmn29t"}">
+                <p class="${"title notification svelte-kmn29t"}" style="${"font-size: 1rem;background: none;"}">
+                  TITLE
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="${"columns is-mutliline is-mobile is-marginless is-gapless svelte-kmn29t"}" id="${"layout"}">
+            <div class="${"column is-4 svelte-kmn29t"}">
+              <div class="${"columns is-mutliline is-mobile is-gapless svelte-kmn29t"}" id="${"picture-id"}">
+                <div class="${"column is-hard-right is-hard-bottom svelte-kmn29t"}">
+                  <div class="${"notification  svelte-kmn29t"}" id="${"picture"}">
+                    <figure class="${"image is-1by1 svelte-kmn29t"}">
+                      <img src="${"https://randomuser.me/api/portraits/" + escape(gender) + "/" + escape(randomNumber) + ".jpg"}" alt="${"rat"}" class="${"svelte-kmn29t"}">
+                    </figure>
+                  </div>
+
+                </div>
+                <div class="${"column is-hard-bottom is-hard-top-landscape svelte-kmn29t"}">
+                  <p class="${"center-box subtitle is-3 svelte-kmn29t"}" id="${"id-number"}">
+                    10-00234
+                  </p>
+                </div>
+
+              </div>
+
+            </div>
+
+            <div class="${"column space-group svelte-kmn29t"}">
+              <div class="${"column is-paddingless svelte-kmn29t"}">
+                <p class="${"center-box title is-3 is-marginless svelte-kmn29t"}">
+                  Arturo Jose T. Magnoaaaa
+                </p>
+              </div>
+              <div class="${"notification is-marginless svelte-kmn29t"}">
+                <div class="${"columns is-multiline is-mobile svelte-kmn29t"}">
+                  <div class="${"column is-narrow svelte-kmn29t"}">
+                    <p id="${"now"}" class="${"title svelte-kmn29t"}" style="${"font-size: 5rem;"}"></p>
+                  </div>
+                  <div class="${"column is-narrow svelte-kmn29t"}">
+                    <p id="${"period"}" class="${"title is-1 svelte-kmn29t"}"></p>
+                  </div>
+                </div>
+              </div>
+              <div class="${"columns is-multiline is-mobile is-gapless svelte-kmn29t"}">
+                <div class="${"column is-hard-right svelte-kmn29t"}">
+                  <p class="${"center-box is-primary has-text-centered svelte-kmn29t"}">IN</p>
+                </div>
+                <div class="${"column is-hard-left svelte-kmn29t"}">
+                  <p class="${"center-box is-primary has-text-centered svelte-kmn29t"}">OUT</p>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+      </div>
+ 
+  </section>`;
 });
 
 /* src/routes/blog/index.svelte generated by Svelte v3.16.0 */
 
-const css$1 = {
+const css$2 = {
 	code: "ul.svelte-1frg2tf{margin:0 0 1em 0;line-height:1.5}",
 	map: "{\"version\":3,\"file\":\"index.svelte\",\"sources\":[\"index.svelte\"],\"sourcesContent\":[\"<script context=\\\"module\\\">\\n\\texport function preload({ params, query }) {\\n\\t\\treturn this.fetch(`blog.json`).then(r => r.json()).then(posts => {\\n\\t\\t\\treturn { posts };\\n\\t\\t});\\n\\t}\\n</script>\\n\\n<script>\\n\\texport let posts;\\n</script>\\n\\n<style>\\n\\tul {\\n\\t\\tmargin: 0 0 1em 0;\\n\\t\\tline-height: 1.5;\\n\\t}\\n</style>\\n\\n<svelte:head>\\n\\t<title>Blog</title>\\n</svelte:head>\\n\\n<h1>Recent posts</h1>\\n\\n<ul>\\n\\t{#each posts as post}\\n\\t\\t<!-- we're using the non-standard `rel=prefetch` attribute to\\n\\t\\t\\t\\ttell Sapper to load the data for the page as soon as\\n\\t\\t\\t\\tthe user hovers over the link or taps it, instead of\\n\\t\\t\\t\\twaiting for the 'click' event -->\\n\\t\\t<li><a rel='prefetch' href='blog/{post.slug}'>{post.title}</a></li>\\n\\t{/each}\\n</ul>\"],\"names\":[],\"mappings\":\"AAaC,EAAE,eAAC,CAAC,AACH,MAAM,CAAE,CAAC,CAAC,CAAC,CAAC,GAAG,CAAC,CAAC,CACjB,WAAW,CAAE,GAAG,AACjB,CAAC\"}"
 };
@@ -295,7 +534,7 @@ function preload({ params, query }) {
 const Blog = create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
 	let { posts } = $$props;
 	if ($$props.posts === void 0 && $$bindings.posts && posts !== void 0) $$bindings.posts(posts);
-	$$result.css.add(css$1);
+	$$result.css.add(css$2);
 
 	return `${($$result.head += `<title>Blog</title>`, "")}
 
@@ -309,7 +548,7 @@ const Blog = create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
 
 /* src/routes/blog/[slug].svelte generated by Svelte v3.16.0 */
 
-const css$2 = {
+const css$3 = {
 	code: ".content.svelte-gnxal1 h2{font-size:1.4em;font-weight:500}.content.svelte-gnxal1 pre{background-color:#f9f9f9;box-shadow:inset 1px 1px 5px rgba(0,0,0,0.05);padding:0.5em;border-radius:2px;overflow-x:auto}.content.svelte-gnxal1 pre code{background-color:transparent;padding:0}.content.svelte-gnxal1 ul{line-height:1.5}.content.svelte-gnxal1 li{margin:0 0 0.5em 0}",
 	map: "{\"version\":3,\"file\":\"[slug].svelte\",\"sources\":[\"[slug].svelte\"],\"sourcesContent\":[\"<script context=\\\"module\\\">\\n\\texport async function preload({ params, query }) {\\n\\t\\t// the `slug` parameter is available because\\n\\t\\t// this file is called [slug].svelte\\n\\t\\tconst res = await this.fetch(`blog/${params.slug}.json`);\\n\\t\\tconst data = await res.json();\\n\\n\\t\\tif (res.status === 200) {\\n\\t\\t\\treturn { post: data };\\n\\t\\t} else {\\n\\t\\t\\tthis.error(res.status, data.message);\\n\\t\\t}\\n\\t}\\n</script>\\n\\n<script>\\n\\texport let post;\\n</script>\\n\\n<style>\\n\\t/*\\n\\t\\tBy default, CSS is locally scoped to the component,\\n\\t\\tand any unused styles are dead-code-eliminated.\\n\\t\\tIn this page, Svelte can't know which elements are\\n\\t\\tgoing to appear inside the {{{post.html}}} block,\\n\\t\\tso we have to use the :global(...) modifier to target\\n\\t\\tall elements inside .content\\n\\t*/\\n\\t.content :global(h2) {\\n\\t\\tfont-size: 1.4em;\\n\\t\\tfont-weight: 500;\\n\\t}\\n\\n\\t.content :global(pre) {\\n\\t\\tbackground-color: #f9f9f9;\\n\\t\\tbox-shadow: inset 1px 1px 5px rgba(0,0,0,0.05);\\n\\t\\tpadding: 0.5em;\\n\\t\\tborder-radius: 2px;\\n\\t\\toverflow-x: auto;\\n\\t}\\n\\n\\t.content :global(pre) :global(code) {\\n\\t\\tbackground-color: transparent;\\n\\t\\tpadding: 0;\\n\\t}\\n\\n\\t.content :global(ul) {\\n\\t\\tline-height: 1.5;\\n\\t}\\n\\n\\t.content :global(li) {\\n\\t\\tmargin: 0 0 0.5em 0;\\n\\t}\\n</style>\\n\\n<svelte:head>\\n\\t<title>{post.title}</title>\\n</svelte:head>\\n\\n<h1>{post.title}</h1>\\n\\n<div class='content'>\\n\\t{@html post.html}\\n</div>\\n\"],\"names\":[],\"mappings\":\"AA4BC,sBAAQ,CAAC,AAAQ,EAAE,AAAE,CAAC,AACrB,SAAS,CAAE,KAAK,CAChB,WAAW,CAAE,GAAG,AACjB,CAAC,AAED,sBAAQ,CAAC,AAAQ,GAAG,AAAE,CAAC,AACtB,gBAAgB,CAAE,OAAO,CACzB,UAAU,CAAE,KAAK,CAAC,GAAG,CAAC,GAAG,CAAC,GAAG,CAAC,KAAK,CAAC,CAAC,CAAC,CAAC,CAAC,CAAC,IAAI,CAAC,CAC9C,OAAO,CAAE,KAAK,CACd,aAAa,CAAE,GAAG,CAClB,UAAU,CAAE,IAAI,AACjB,CAAC,AAED,sBAAQ,CAAC,AAAQ,GAAG,AAAC,CAAC,AAAQ,IAAI,AAAE,CAAC,AACpC,gBAAgB,CAAE,WAAW,CAC7B,OAAO,CAAE,CAAC,AACX,CAAC,AAED,sBAAQ,CAAC,AAAQ,EAAE,AAAE,CAAC,AACrB,WAAW,CAAE,GAAG,AACjB,CAAC,AAED,sBAAQ,CAAC,AAAQ,EAAE,AAAE,CAAC,AACrB,MAAM,CAAE,CAAC,CAAC,CAAC,CAAC,KAAK,CAAC,CAAC,AACpB,CAAC\"}"
 };
@@ -328,7 +567,7 @@ async function preload$1({ params, query }) {
 const U5Bslugu5D = create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
 	let { post } = $$props;
 	if ($$props.post === void 0 && $$bindings.post && post !== void 0) $$bindings.post(post);
-	$$result.css.add(css$2);
+	$$result.css.add(css$3);
 
 	return `${($$result.head += `<title>${escape(post.title)}</title>`, "")}
 
@@ -339,22 +578,61 @@ const U5Bslugu5D = create_ssr_component(($$result, $$props, $$bindings, $$slots)
 </div>`;
 });
 
+/* src/routes/sub.svelte generated by Svelte v3.16.0 */
+
+const Sub = create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
+	let $new_scans;
+
+	const NEW_SCANS = apolloBoost.gql`
+subscription {
+  scanned(limit: 10, order_by: {created_at: desc}) {
+    scan
+  }
+}
+  `;
+
+	let new_scans = svelteApollo.subscribe(client, { query: NEW_SCANS });
+	$new_scans = get_store_value(new_scans);
+	$new_scans = get_store_value(new_scans);
+
+	return `${($$result.head += `<title>Subscription</title>`, "")}
+
+
+<h1>Subscription</h1>
+<ul>
+  ${(function (__value) {
+		if (is_promise(__value)) return `
+    <li>Loading...</li>
+  `;
+
+		return (function (result) {
+			return `
+    ${result.data.scanned.length
+			? each(result.data.scanned, scanned => `<li>${escape(scanned.scan)}</li>`)
+			: `<li>No authors found</li>`}
+  `;
+		})(__value);
+	})($new_scans)}
+</ul>`;
+});
+
 /* src/components/Nav.svelte generated by Svelte v3.16.0 */
 
-const css$3 = {
+const css$4 = {
 	code: "nav.svelte-11kwxiv{border-bottom:1px solid rgba(255,62,0,0.1);font-weight:300;padding:0 1em}ul.svelte-11kwxiv{margin:0;padding:0}ul.svelte-11kwxiv::after{content:'';display:block;clear:both}li.svelte-11kwxiv{display:block;float:left}.selected.svelte-11kwxiv{position:relative;display:inline-block}.selected.svelte-11kwxiv::after{position:absolute;content:'';width:calc(100% - 1em);height:2px;background-color:rgb(255,62,0);display:block;bottom:-1px}a.svelte-11kwxiv{text-decoration:none;padding:1em 0.5em;display:block}",
-	map: "{\"version\":3,\"file\":\"Nav.svelte\",\"sources\":[\"Nav.svelte\"],\"sourcesContent\":[\"<script>\\n\\texport let segment;\\n</script>\\n\\n<style>\\n\\tnav {\\n\\t\\tborder-bottom: 1px solid rgba(255,62,0,0.1);\\n\\t\\tfont-weight: 300;\\n\\t\\tpadding: 0 1em;\\n\\t}\\n\\n\\tul {\\n\\t\\tmargin: 0;\\n\\t\\tpadding: 0;\\n\\t}\\n\\n\\t/* clearfix */\\n\\tul::after {\\n\\t\\tcontent: '';\\n\\t\\tdisplay: block;\\n\\t\\tclear: both;\\n\\t}\\n\\n\\tli {\\n\\t\\tdisplay: block;\\n\\t\\tfloat: left;\\n\\t}\\n\\n\\t.selected {\\n\\t\\tposition: relative;\\n\\t\\tdisplay: inline-block;\\n\\t}\\n\\n\\t.selected::after {\\n\\t\\tposition: absolute;\\n\\t\\tcontent: '';\\n\\t\\twidth: calc(100% - 1em);\\n\\t\\theight: 2px;\\n\\t\\tbackground-color: rgb(255,62,0);\\n\\t\\tdisplay: block;\\n\\t\\tbottom: -1px;\\n\\t}\\n\\n\\ta {\\n\\t\\ttext-decoration: none;\\n\\t\\tpadding: 1em 0.5em;\\n\\t\\tdisplay: block;\\n\\t}\\n</style>\\n\\n<nav>\\n\\t<ul>\\n\\t\\t<li><a class:selected='{segment === undefined}' href='.'>home</a></li>\\n\\t\\t<li><a class:selected='{segment === \\\"about\\\"}' href='about'>about</a></li>\\n\\n\\t\\t<!-- for the blog link, we're using rel=prefetch so that Sapper prefetches\\n\\t\\t     the blog data when we hover over the link or tap it on a touchscreen -->\\n\\t\\t<li><a rel=prefetch class:selected='{segment === \\\"blog\\\"}' href='blog'>blog</a></li>\\n\\t</ul>\\n</nav>\\n\"],\"names\":[],\"mappings\":\"AAKC,GAAG,eAAC,CAAC,AACJ,aAAa,CAAE,GAAG,CAAC,KAAK,CAAC,KAAK,GAAG,CAAC,EAAE,CAAC,CAAC,CAAC,GAAG,CAAC,CAC3C,WAAW,CAAE,GAAG,CAChB,OAAO,CAAE,CAAC,CAAC,GAAG,AACf,CAAC,AAED,EAAE,eAAC,CAAC,AACH,MAAM,CAAE,CAAC,CACT,OAAO,CAAE,CAAC,AACX,CAAC,AAGD,iBAAE,OAAO,AAAC,CAAC,AACV,OAAO,CAAE,EAAE,CACX,OAAO,CAAE,KAAK,CACd,KAAK,CAAE,IAAI,AACZ,CAAC,AAED,EAAE,eAAC,CAAC,AACH,OAAO,CAAE,KAAK,CACd,KAAK,CAAE,IAAI,AACZ,CAAC,AAED,SAAS,eAAC,CAAC,AACV,QAAQ,CAAE,QAAQ,CAClB,OAAO,CAAE,YAAY,AACtB,CAAC,AAED,wBAAS,OAAO,AAAC,CAAC,AACjB,QAAQ,CAAE,QAAQ,CAClB,OAAO,CAAE,EAAE,CACX,KAAK,CAAE,KAAK,IAAI,CAAC,CAAC,CAAC,GAAG,CAAC,CACvB,MAAM,CAAE,GAAG,CACX,gBAAgB,CAAE,IAAI,GAAG,CAAC,EAAE,CAAC,CAAC,CAAC,CAC/B,OAAO,CAAE,KAAK,CACd,MAAM,CAAE,IAAI,AACb,CAAC,AAED,CAAC,eAAC,CAAC,AACF,eAAe,CAAE,IAAI,CACrB,OAAO,CAAE,GAAG,CAAC,KAAK,CAClB,OAAO,CAAE,KAAK,AACf,CAAC\"}"
+	map: "{\"version\":3,\"file\":\"Nav.svelte\",\"sources\":[\"Nav.svelte\"],\"sourcesContent\":[\"<script>\\n\\texport let segment;\\n</script>\\n\\n<style>\\n\\tnav {\\n\\t\\tborder-bottom: 1px solid rgba(255,62,0,0.1);\\n\\t\\tfont-weight: 300;\\n\\t\\tpadding: 0 1em;\\n\\t}\\n\\n\\tul {\\n\\t\\tmargin: 0;\\n\\t\\tpadding: 0;\\n\\t}\\n\\n\\t/* clearfix */\\n\\tul::after {\\n\\t\\tcontent: '';\\n\\t\\tdisplay: block;\\n\\t\\tclear: both;\\n\\t}\\n\\n\\tli {\\n\\t\\tdisplay: block;\\n\\t\\tfloat: left;\\n\\t}\\n\\n\\t.selected {\\n\\t\\tposition: relative;\\n\\t\\tdisplay: inline-block;\\n\\t}\\n\\n\\t.selected::after {\\n\\t\\tposition: absolute;\\n\\t\\tcontent: '';\\n\\t\\twidth: calc(100% - 1em);\\n\\t\\theight: 2px;\\n\\t\\tbackground-color: rgb(255,62,0);\\n\\t\\tdisplay: block;\\n\\t\\tbottom: -1px;\\n\\t}\\n\\n\\ta {\\n\\t\\ttext-decoration: none;\\n\\t\\tpadding: 1em 0.5em;\\n\\t\\tdisplay: block;\\n\\t}\\n</style>\\n\\n<nav>\\n\\t<ul>\\n\\t\\t<li><a class:selected='{segment === undefined}' href='.'>home</a></li>\\n\\t\\t<li><a class:selected='{segment === \\\"dashboard\\\"}' href='dashboard'>Dashboard</a></li>\\n\\t\\t<li><a class:selected='{segment === \\\"screen\\\"}' href='screen'>Screen</a></li>\\n\\n\\t\\t<!-- for the blog link, we're using rel=prefetch so that Sapper prefetches\\n\\t\\t     the blog data when we hover over the link or tap it on a touchscreen -->\\n\\t\\t<li><a rel=prefetch class:selected='{segment === \\\"blog\\\"}' href='blog'>blog</a></li>\\n\\t</ul>\\n</nav>\\n\"],\"names\":[],\"mappings\":\"AAKC,GAAG,eAAC,CAAC,AACJ,aAAa,CAAE,GAAG,CAAC,KAAK,CAAC,KAAK,GAAG,CAAC,EAAE,CAAC,CAAC,CAAC,GAAG,CAAC,CAC3C,WAAW,CAAE,GAAG,CAChB,OAAO,CAAE,CAAC,CAAC,GAAG,AACf,CAAC,AAED,EAAE,eAAC,CAAC,AACH,MAAM,CAAE,CAAC,CACT,OAAO,CAAE,CAAC,AACX,CAAC,AAGD,iBAAE,OAAO,AAAC,CAAC,AACV,OAAO,CAAE,EAAE,CACX,OAAO,CAAE,KAAK,CACd,KAAK,CAAE,IAAI,AACZ,CAAC,AAED,EAAE,eAAC,CAAC,AACH,OAAO,CAAE,KAAK,CACd,KAAK,CAAE,IAAI,AACZ,CAAC,AAED,SAAS,eAAC,CAAC,AACV,QAAQ,CAAE,QAAQ,CAClB,OAAO,CAAE,YAAY,AACtB,CAAC,AAED,wBAAS,OAAO,AAAC,CAAC,AACjB,QAAQ,CAAE,QAAQ,CAClB,OAAO,CAAE,EAAE,CACX,KAAK,CAAE,KAAK,IAAI,CAAC,CAAC,CAAC,GAAG,CAAC,CACvB,MAAM,CAAE,GAAG,CACX,gBAAgB,CAAE,IAAI,GAAG,CAAC,EAAE,CAAC,CAAC,CAAC,CAC/B,OAAO,CAAE,KAAK,CACd,MAAM,CAAE,IAAI,AACb,CAAC,AAED,CAAC,eAAC,CAAC,AACF,eAAe,CAAE,IAAI,CACrB,OAAO,CAAE,GAAG,CAAC,KAAK,CAClB,OAAO,CAAE,KAAK,AACf,CAAC\"}"
 };
 
 const Nav = create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
 	let { segment } = $$props;
 	if ($$props.segment === void 0 && $$bindings.segment && segment !== void 0) $$bindings.segment(segment);
-	$$result.css.add(css$3);
+	$$result.css.add(css$4);
 
 	return `<nav class="${"svelte-11kwxiv"}">
 	<ul class="${"svelte-11kwxiv"}">
 		<li class="${"svelte-11kwxiv"}"><a href="${"."}" class="${["svelte-11kwxiv", segment === undefined ? "selected" : ""].join(" ").trim()}">home</a></li>
-		<li class="${"svelte-11kwxiv"}"><a href="${"about"}" class="${["svelte-11kwxiv", segment === "about" ? "selected" : ""].join(" ").trim()}">about</a></li>
+		<li class="${"svelte-11kwxiv"}"><a href="${"dashboard"}" class="${["svelte-11kwxiv", segment === "dashboard" ? "selected" : ""].join(" ").trim()}">Dashboard</a></li>
+		<li class="${"svelte-11kwxiv"}"><a href="${"screen"}" class="${["svelte-11kwxiv", segment === "screen" ? "selected" : ""].join(" ").trim()}">Screen</a></li>
 
 		
 		<li class="${"svelte-11kwxiv"}"><a rel="${"prefetch"}" href="${"blog"}" class="${["svelte-11kwxiv", segment === "blog" ? "selected" : ""].join(" ").trim()}">blog</a></li>
@@ -364,15 +642,15 @@ const Nav = create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
 
 /* src/routes/_layout.svelte generated by Svelte v3.16.0 */
 
-const css$4 = {
+const css$5 = {
 	code: "main.svelte-1uhnsl8{position:relative;max-width:56em;background-color:white;padding:2em;margin:0 auto;box-sizing:border-box}",
-	map: "{\"version\":3,\"file\":\"_layout.svelte\",\"sources\":[\"_layout.svelte\"],\"sourcesContent\":[\"<script>\\n\\timport Nav from '../components/Nav.svelte';\\n\\n\\texport let segment;\\n</script>\\n\\n<style>\\n\\tmain {\\n\\t\\tposition: relative;\\n\\t\\tmax-width: 56em;\\n\\t\\tbackground-color: white;\\n\\t\\tpadding: 2em;\\n\\t\\tmargin: 0 auto;\\n\\t\\tbox-sizing: border-box;\\n\\t}\\n</style>\\n\\n<Nav {segment}/>\\n\\n<main>\\n\\t<slot></slot>\\n</main>\"],\"names\":[],\"mappings\":\"AAOC,IAAI,eAAC,CAAC,AACL,QAAQ,CAAE,QAAQ,CAClB,SAAS,CAAE,IAAI,CACf,gBAAgB,CAAE,KAAK,CACvB,OAAO,CAAE,GAAG,CACZ,MAAM,CAAE,CAAC,CAAC,IAAI,CACd,UAAU,CAAE,UAAU,AACvB,CAAC\"}"
+	map: "{\"version\":3,\"file\":\"_layout.svelte\",\"sources\":[\"_layout.svelte\"],\"sourcesContent\":[\"<script>\\n\\timport Nav from '../components/Nav.svelte';\\n\\texport let segment;\\n\\n</script>\\n\\n<style>\\n\\tmain {\\n\\t\\tposition: relative;\\n\\t\\tmax-width: 56em;\\n\\t\\tbackground-color: white;\\n\\t\\tpadding: 2em;\\n\\t\\tmargin: 0 auto;\\n\\t\\tbox-sizing: border-box;\\n\\t}\\n</style>\\n\\n<Nav {segment}/>\\n\\n<main>\\n\\t<slot></slot>\\n</main>\"],\"names\":[],\"mappings\":\"AAOC,IAAI,eAAC,CAAC,AACL,QAAQ,CAAE,QAAQ,CAClB,SAAS,CAAE,IAAI,CACf,gBAAgB,CAAE,KAAK,CACvB,OAAO,CAAE,GAAG,CACZ,MAAM,CAAE,CAAC,CAAC,IAAI,CACd,UAAU,CAAE,UAAU,AACvB,CAAC\"}"
 };
 
 const Layout = create_ssr_component(($$result, $$props, $$bindings, $$slots) => {
 	let { segment } = $$props;
 	if ($$props.segment === void 0 && $$bindings.segment && segment !== void 0) $$bindings.segment(segment);
-	$$result.css.add(css$4);
+	$$result.css.add(css$5);
 
 	return `${validate_component(Nav, "Nav").$$render($$result, { segment }, {}, {})}
 
@@ -383,7 +661,7 @@ const Layout = create_ssr_component(($$result, $$props, $$bindings, $$slots) => 
 
 /* src/routes/_error.svelte generated by Svelte v3.16.0 */
 
-const css$5 = {
+const css$6 = {
 	code: "h1.svelte-8od9u6,p.svelte-8od9u6{margin:0 auto}h1.svelte-8od9u6{font-size:2.8em;font-weight:700;margin:0 0 0.5em 0}p.svelte-8od9u6{margin:1em auto}@media(min-width: 480px){h1.svelte-8od9u6{font-size:4em}}",
 	map: "{\"version\":3,\"file\":\"_error.svelte\",\"sources\":[\"_error.svelte\"],\"sourcesContent\":[\"<script>\\n\\texport let status;\\n\\texport let error;\\n\\n\\tconst dev = undefined === 'development';\\n</script>\\n\\n<style>\\n\\th1, p {\\n\\t\\tmargin: 0 auto;\\n\\t}\\n\\n\\th1 {\\n\\t\\tfont-size: 2.8em;\\n\\t\\tfont-weight: 700;\\n\\t\\tmargin: 0 0 0.5em 0;\\n\\t}\\n\\n\\tp {\\n\\t\\tmargin: 1em auto;\\n\\t}\\n\\n\\t@media (min-width: 480px) {\\n\\t\\th1 {\\n\\t\\t\\tfont-size: 4em;\\n\\t\\t}\\n\\t}\\n</style>\\n\\n<svelte:head>\\n\\t<title>{status}</title>\\n</svelte:head>\\n\\n<h1>{status}</h1>\\n\\n<p>{error.message}</p>\\n\\n{#if dev && error.stack}\\n\\t<pre>{error.stack}</pre>\\n{/if}\\n\"],\"names\":[],\"mappings\":\"AAQC,gBAAE,CAAE,CAAC,cAAC,CAAC,AACN,MAAM,CAAE,CAAC,CAAC,IAAI,AACf,CAAC,AAED,EAAE,cAAC,CAAC,AACH,SAAS,CAAE,KAAK,CAChB,WAAW,CAAE,GAAG,CAChB,MAAM,CAAE,CAAC,CAAC,CAAC,CAAC,KAAK,CAAC,CAAC,AACpB,CAAC,AAED,CAAC,cAAC,CAAC,AACF,MAAM,CAAE,GAAG,CAAC,IAAI,AACjB,CAAC,AAED,MAAM,AAAC,YAAY,KAAK,CAAC,AAAC,CAAC,AAC1B,EAAE,cAAC,CAAC,AACH,SAAS,CAAE,GAAG,AACf,CAAC,AACF,CAAC\"}"
 };
@@ -393,7 +671,7 @@ const Error$1 = create_ssr_component(($$result, $$props, $$bindings, $$slots) =>
 	let { error } = $$props;
 	if ($$props.status === void 0 && $$bindings.status && status !== void 0) $$bindings.status(status);
 	if ($$props.error === void 0 && $$bindings.error && error !== void 0) $$bindings.error(error);
-	$$result.css.add(css$5);
+	$$result.css.add(css$6);
 
 	return `${($$result.head += `<title>${escape(status)}</title>`, "")}
 
@@ -411,16 +689,23 @@ const d = decodeURIComponent;
 const manifest = {
 	server_routes: [
 		{
+			// graphql.js
+			pattern: /^\/graphql\/?$/,
+			handlers: route_0,
+			params: () => ({})
+		},
+
+		{
 			// blog/index.json.js
 			pattern: /^\/blog.json$/,
-			handlers: route_0,
+			handlers: route_1,
 			params: () => ({})
 		},
 
 		{
 			// blog/[slug].json.js
 			pattern: /^\/blog\/([^\/]+?).json$/,
-			handlers: route_1,
+			handlers: route_2,
 			params: match => ({ slug: d(match[1]) })
 		}
 	],
@@ -435,10 +720,18 @@ const manifest = {
 		},
 
 		{
-			// about.svelte
-			pattern: /^\/about\/?$/,
+			// dashboard.svelte
+			pattern: /^\/dashboard\/?$/,
 			parts: [
-				{ name: "about", file: "about.svelte", component: About }
+				{ name: "dashboard", file: "dashboard.svelte", component: Dashboard }
+			]
+		},
+
+		{
+			// screen.svelte
+			pattern: /^\/screen\/?$/,
+			parts: [
+				{ name: "screen", file: "screen.svelte", component: Screen }
 			]
 		},
 
@@ -456,6 +749,14 @@ const manifest = {
 			parts: [
 				null,
 				{ name: "blog_$slug", file: "blog/[slug].svelte", component: U5Bslugu5D, preload: preload$1, params: match => ({ slug: d(match[1]) }) }
+			]
+		},
+
+		{
+			// sub.svelte
+			pattern: /^\/sub\/?$/,
+			parts: [
+				{ name: "sub", file: "sub.svelte", component: Sub }
 			]
 		}
 	],
@@ -1828,7 +2129,7 @@ class Headers {
 	forEach(callback) {
 		let thisArg = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : undefined;
 
-		let pairs = getHeaders(this);
+		let pairs = getHeaders$1(this);
 		let i = 0;
 		while (i < pairs.length) {
 			var _pairs$i = pairs[i];
@@ -1836,7 +2137,7 @@ class Headers {
 			      value = _pairs$i[1];
 
 			callback.call(thisArg, value, name, this);
-			pairs = getHeaders(this);
+			pairs = getHeaders$1(this);
 			i++;
 		}
 	}
@@ -1963,7 +2264,7 @@ Object.defineProperties(Headers.prototype, {
 	entries: { enumerable: true }
 });
 
-function getHeaders(headers) {
+function getHeaders$1(headers) {
 	let kind = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 'key+value';
 
 	const keys = Object.keys(headers[MAP]).sort();
@@ -2000,7 +2301,7 @@ const HeadersIteratorPrototype = Object.setPrototypeOf({
 		      kind = _INTERNAL.kind,
 		      index = _INTERNAL.index;
 
-		const values = getHeaders(target, kind);
+		const values = getHeaders$1(target, kind);
 		const len = values.length;
 		if (index >= len) {
 			return {
@@ -3179,12 +3480,21 @@ function noop$1(){}
 const { PORT, NODE_ENV } = process.env;
 const dev = NODE_ENV === 'development';
 
-polka() // You can also use Express
-	.use(
-		compression({ threshold: 0 }),
-		sirv('static', { dev }),
-		middleware()
-	)
-	.listen(PORT, err => {
-		if (err) console.log('error', err);
-	});
+
+if (typeof document === 'undefined') {
+	global.window = {};
+  }
+
+
+const app = express() // You can also use Express
+  .use(
+    compression({ threshold: 0 }),
+    sirv('static', { dev }),
+    middleware()
+  );
+
+const server = http.createServer(app);
+
+server.listen(PORT, err => {
+  if (err) console.log('error', err);
+});
