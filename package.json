@@ -53,6 +53,6 @@
     "subscriptions-transport-ws": "^0.9.16",
     "svelma": "^0.3.0",
     "svelte-apollo": "^0.3.0",
-    "ws": "^7.2.0"
+    "ws": "^7.4.6"
   }
 }
